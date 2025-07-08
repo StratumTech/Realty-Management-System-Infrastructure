@@ -1,0 +1,85 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: lb://realty-management-system-user-service/.well-known/jwks.json
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: login-request
+              uri: lb://realty-management-system-user-service
+              predicates:
+                - Path=/api/v1/auth/login
+                - Method=POST
+            - id: register-request
+              uri: lb://realty-management-system-user-service
+              predicates:
+                - Path=/api/v1/auth/register
+                - Method=POST
+            - id: user-request
+              uri: lb://realty-management-system-user-service
+              predicates:
+                - Path=/api/v1/agents/**
+                - Path=/api/v1/admins/**
+              filters:
+                - name: JwtAuth
+            - id: property-request
+              uri: lb://realty-management-system-property-service
+              predicates:
+                - Path=/api/v1/agents/{agentUuid}/properties,/api/v1/agents/{agentUuid}/properties/{propertyUuid}
+                - Method=POST,PUT
+              filters:
+                - name: JwtAuth
+            - id: property-detail-by-agent-request
+              uri: lb://realty-management-system-property-service
+              predicates:
+                - Path=/api/v1/agents/*/properties/*
+                - Method=GET
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /api/v1/agents/(?<agent>[^/]+)/properties/(?<prop>[^/]+)
+                    replacement: /api/v1/properties/${prop}
+                - name: AddRequestParameter
+                  args:
+                    name: agentUuid
+                    value: '{agent}'
+            - id: property-filtered-by-agent-request
+              uri: lb://realty-management-system-search-service
+              predicates:
+                - Path=/api/v1/agents/*/properties
+                - Method=GET
+              filters:
+                - name: RewritePath
+                  args:
+                    regexp: /api/v1/agents/(?<agent>[^/]+)/properties
+                    replacement: /api/v1/properties
+                - RemoveRequestParameter=agentuuid
+                - AddRequestParameter=agentUuid,{agent}
+
+
+  application:
+    name: realty-management-system-api
+    version: 1.0.0
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+cors:
+  allowed-origins: http://localhost:80,http://localhost
+
+logging:
+  level:
+    root: error
+    com.stratumtech.realtyapi: trace
