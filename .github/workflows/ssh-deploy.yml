@@ -25,20 +25,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets[ inputs.ssh-key-secret ] }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+      - name: Start SSH agent and add key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets[ inputs.ssh-key-secret ] }}
 
-      - name: Copy files
-        run: rsync -avz --delete ./ ${{ secrets['ssh-user'] }}@${{ secrets['ssh-host'] }}:${{ inputs.remote-workdir }}
+      - name: Copy files to server
+        run: |
+          rsync -avz --delete ./ ${{ secrets['ssh-user'] }}@${{ secrets['ssh-host'] }}:${{ inputs.remote-workdir }}
         env:
-          RSYNC_RSH: "ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
+          RSYNC_RSH: "ssh -o StrictHostKeyChecking=no"
 
-      - name: Run deploy script
+      - name: Run deploy script on server
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -o StrictHostKeyChecking=no \
             ${{ secrets['ssh-user'] }}@${{ secrets['ssh-host'] }} \
             "cd ${{ inputs.remote-workdir }} && bash -c '${{ inputs.deploy-script }}'"
-
