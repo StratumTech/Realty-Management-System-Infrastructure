@@ -17,3 +17,5 @@ jobs:
       ssh-key-secret: ${{ secrets.SSH_PRIVATE_KEY }}
       ssh-host: ${{ secrets.SERVER_HOST }}
       ssh-user: ${{ secrets.SERVER_USER }}
+      config-service-username: ${{ secrets.CONFIG_SERVICE_USERNAME }}
+      config-service-password: ${{ secrets.CONFIG_SERVICE_PASSWORD }}
