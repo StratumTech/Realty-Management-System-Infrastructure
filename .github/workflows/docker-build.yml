@@ -1,4 +1,4 @@
-name: "CI Java/Gradle (reusable)"
+name: "CI Java/Docker (reusable)"
 
 on:
   workflow_call:
@@ -15,8 +15,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: gradle:${{ inputs.java-version }}-jdk
-      options: --user gradle
+      image: eclipse-temurin:${{ inputs.java-version }}
     
     steps:
       - name: Checkout code
