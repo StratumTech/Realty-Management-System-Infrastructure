@@ -16,6 +16,10 @@ on:
         required: true
       ssh-user:
         required: true
+      config-service-username:
+        required: true
+      config-service-password:
+        required: true
 
 jobs:
   deploy:
@@ -28,6 +32,13 @@ jobs:
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets[ 'ssh-key-secret' ] }}
+
+      - name: Add config service credentials to .env
+        run: |
+          cat <<EOF >> .env
+          CONFIG_SERVICE_USERNAME=${{ secrets['config-service-username'] }}
+          CONFIG_SERVICE_PASSWORD=${{ secrets['config-service-password'] }}
+          EOF
 
       - name: Copy files to server
         run: |
