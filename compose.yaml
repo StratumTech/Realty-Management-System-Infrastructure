@@ -72,3 +72,4 @@ services:
 
 networks:
   app-net:
+    driver: bridge
