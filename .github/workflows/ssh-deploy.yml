@@ -3,21 +3,20 @@ name: "Deploy via SSH (reusable)"
 on:
   workflow_call:
     inputs:
+      ssh-key-secret:
+        type: string
+        required: true
+      remote-workdir:
+        type: string
+        required: true
+      deploy-script:
+        type: string
+        required: true
+    secrets:
       ssh-host:
         required: true
-        type: string
       ssh-user:
         required: true
-        type: string
-      ssh-key-secret:
-        required: true
-        type: string
-      remote-workdir:
-        required: true
-        type: string
-      deploy-script:
-        required: true
-        type: string
 
 jobs:
   deploy:
@@ -32,16 +31,14 @@ jobs:
           echo "${{ secrets[ inputs.ssh-key-secret ] }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
-      - name: Copy files to server
-        run: |
-          rsync -avz --delete ./ ${{ inputs.ssh-user }}@${{ inputs.ssh-host }}:${{ inputs.remote-workdir }}
+      - name: Copy files
+        run: rsync -avz --delete ./ ${{ secrets['ssh-user'] }}@${{ secrets['ssh-host'] }}:${{ inputs.remote-workdir }}
         env:
-          RSYNC_RSH: "ssh -o StrictHostKeyChecking=no"
+          RSYNC_RSH: "ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
 
-      - name: Run deploy script on server
+      - name: Run deploy script
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ inputs.ssh-user }}@${{ inputs.ssh-host }} "
-            cd ${{ inputs.remote-workdir }};
-            bash -c '${{ inputs.deploy-script }}'
-          "
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets['ssh-user'] }}@${{ secrets['ssh-host'] }} \
+            "cd ${{ inputs.remote-workdir }} && bash -c '${{ inputs.deploy-script }}'"
 
