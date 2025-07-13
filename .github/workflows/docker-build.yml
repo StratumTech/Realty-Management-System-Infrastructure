@@ -30,7 +30,7 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*','**/gradle-wrapper.properties') }}
 
       - name: Run Gradle build
-        run: gradle ${{ inputs.gradle-arguments }}
+        run: ./gradlew ${{ inputs.gradle-arguments }}
 
       - name: Upload test results
         if: always()
