@@ -1,0 +1,47 @@
+name: "Deploy via SSH (reusable)"
+
+on:
+  workflow_call:
+    inputs:
+      ssh-host:
+        required: true
+        type: string
+      ssh-user:
+        required: true
+        type: string
+      ssh-key-secret:
+        required: true
+        type: string
+      remote-workdir:
+        required: true
+        type: string
+      deploy-script:
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets[ inputs.ssh-key-secret ] }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Copy files to server
+        run: |
+          rsync -avz --delete ./ ${{ inputs.ssh-user }}@${{ inputs.ssh-host }}:${{ inputs.remote-workdir }}
+        env:
+          RSYNC_RSH: "ssh -o StrictHostKeyChecking=no"
+
+      - name: Run deploy script on server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ inputs.ssh-user }}@${{ inputs.ssh-host }} "
+            cd ${{ inputs.remote-workdir }};
+            bash -c '${{ inputs.deploy-script }}'
+          "
+
