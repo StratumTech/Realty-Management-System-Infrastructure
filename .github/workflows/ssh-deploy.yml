@@ -3,9 +3,6 @@ name: "Deploy via SSH (reusable)"
 on:
   workflow_call:
     inputs:
-      ssh-key-secret:
-        type: string
-        required: true
       remote-workdir:
         type: string
         required: true
@@ -13,6 +10,8 @@ on:
         type: string
         required: true
     secrets:
+      ssh-key-secret:
+        required: true
       ssh-host:
         required: true
       ssh-user:
@@ -28,7 +27,7 @@ jobs:
       - name: Start SSH agent and add key
         uses: webfactory/ssh-agent@v0.7.0
         with:
-          ssh-private-key: ${{ secrets[ inputs.ssh-key-secret ] }}
+          ssh-private-key: ${{ secrets[ 'ssh-key-secret' ] }}
 
       - name: Copy files to server
         run: |
